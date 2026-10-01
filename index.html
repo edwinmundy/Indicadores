@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Registro local de ventas y atenciones para el indicador semanal en Excel.">
+  <title>Registro de indicadores</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23181818'/%3E%3Cpath d='M7 23V16h4v7zm7 0V10h4v13zm7 0V6h4v17z' fill='%23d4d4d4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/jszip.min.js"></script><script defer src="plantilla.js"></script>
+  <script defer src="objetivos-base.js"></script><script defer src="modules/modelo-objetivos.js"></script>
+  <script defer src="modules/modelo-eliminaciones.js"></script><script defer src="modules/modelo-textos.js"></script><script defer src="modules/modelo-atenciones.js"></script>
+  <script defer src="modules/modelo-escala.js"></script><script defer src="modules/modelo-grupos.js"></script><script defer src="modules/modelo-cierres.js"></script><script defer src="modules/modelo-independientes.js"></script><script defer src="modules/modelo-metricas.js"></script><script defer src="core.js"></script><script defer src="modules/exportar-libro.js"></script><script defer src="excel.js"></script>
+  <script defer src="modules/unir-indicadores.js"></script><script defer src="modules/exportar-pdf.js"></script><script defer src="modules/exportar-indicadores.js"></script>
+  <script defer src="modules/escala.js"></script><script defer src="modules/objetivos.js"></script>
+  <script defer src="modules/compras.js"></script>
+  <script defer src="modules/grupos.js"></script><script defer src="modules/exportar-analisis.js"></script><script defer src="modules/analisis-grupos.js"></script>
+  <script defer src="modules/independientes.js"></script><script defer src="modules/cierres.js"></script><script defer src="modules/eliminaciones.js"></script><script defer src="modules/textos.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+ <header class="topbar"><div class="brand"><span class="brand-icon" aria-hidden="true">▥</span> INDICADORES <span class="brand-divider"></span><span class="brand-sub">Registro de ventas</span></div><span class="local-badge">En este equipo</span></header>
+ <main>
+  <section class="heading"><div><p class="eyebrow">CONTROL SEMANAL</p><h1>De tus ventas al indicador.</h1><p class="muted">Pega el reporte diario y prepara tu reunión semanal.</p></div><div class="actions"><button id="viewSales" hidden>Ver registro de ventas</button><button id="restore">Restaurar respaldo</button><button id="backup">Respaldar datos</button><button id="exportData" title="Registros, compras, grupos, APPs y resúmenes en un Excel aparte">↓ Exportar datos</button><button id="export" class="primary" title="Solo el indicador seleccionado, en A1:AM53">↓ Exportar indicador</button></div></section>
+  <div id="message" class="message" role="status" hidden></div>
+  <section class="config panel" aria-label="Configuración del indicador">
+   <label class="wide">Título del indicador<input id="title" value="VENTA NETA" maxlength="100"></label>
+   <label>Indicador<select id="metric"><option value="sales">Venta neta</option><option value="visits">Atenciones</option><option value="tp">TP · Ticket promedio</option><option value="sa">SA · Servicios alimenticios</option><option value="apps">TOTAL APPs</option><option value="mc">MC · Margen de contribución</option><option value="negativeSkus">SKUs NEGATIVOS</option><option value="removedSkus">SKUs ELIMINADOS POR TIENDA</option><option value="cashClosings">CIERRES DE CAJA</option><option value="complaints">RECLAMOS</option><option value="compliments">FELICITACIONES</option></select></label>
+   <label>Año ISO<input id="year" type="number" min="2000" max="2100" value="2026"></label>
+   <label>Semana inicial<input id="startWeek" type="number" min="1" max="53" value="27"></label>
+   <div class="range-info"><strong id="weekRange">Semanas 27 — 39</strong><span id="dateRange" class="muted"></span></div>
+  </section>
+  <section id="salesStats" class="stats" aria-label="Resumen del período semanal"><div><span>Venta neta del período</span><strong id="totalSales">$0</strong></div><div><span>Atenciones del período</span><strong id="totalVisits">0</strong></div><div><span>Días registrados</span><strong id="totalDays">0</strong></div><div><span>Semanas con datos</span><strong id="totalWeeks">0 <em>/ 13</em></strong><small id="saveStatus">Sin datos registrados</small></div></section>
+  <section class="panel indicator"><div class="section-head"><div><h2 id="chartTitle">Venta neta</h2><p id="chartSubtitle" class="muted">Promedio semanal del trimestre anterior y resultados semanales</p></div><div class="actions"><button id="independentButton" class="primary" hidden>Ingresar datos</button><button id="scaleButton" aria-haspopup="dialog" aria-controls="scaleDialog">Escala</button><button id="goalsButton" aria-haspopup="dialog" aria-controls="goalsDialog">Objetivos</button></div></div><div class="chart-scroll"><div id="chart" class="chart"><p class="muted">Cargando indicador…</p></div></div><div class="chart-footer"><div class="legend"><span><i style="--color:#70AD47"></i><span id="goodLegend">Cumple o supera meta</span></span><span><i style="--color:#FF0000"></i><span id="badLegend">Bajo meta</span></span><span><i style="--color:#000"></i>Sin objetivo</span><span><i style="--color:#fff"></i>Sin datos</span><span>━ Objetivo</span></div></div></section>
+  <section id="salesRegistry" class="panel registry"><div class="section-head"><div><h2>Registro diario <span id="recordCount" class="count">0</span></h2></div><div class="actions"><label class="filter-label">Mes<input type="month" id="monthFilter" aria-label="Filtrar registro por mes"></label><button id="clearFilter" title="Ver todos los meses">Todos</button><button id="groupAnalysisButton" aria-haspopup="dialog" aria-controls="groupAnalysisDialog">Análisis de grupos</button><button id="groupSalesButton" aria-haspopup="dialog" aria-controls="groupSalesDialog">Ventas por grupos</button><button id="purchasesButton" aria-haspopup="dialog" aria-controls="purchasesDialog">Compras</button><button id="paste" class="primary">Libro de Boletas</button></div></div><div class="registry-columns"><span class="muted">Columnas:</span><button type="button" id="toggleGroup1" class="text-button" aria-expanded="true" aria-controls="salesTable">Ocultar primer grupo</button><button type="button" id="toggleGroup2" class="text-button" aria-expanded="true" aria-controls="salesTable">Ocultar segundo grupo</button></div><div class="table-scroll"><table id="salesTable"><thead><tr class="group-head"><th></th><th colspan="5" data-sales-group="1">Primer grupo</th><th colspan="3" data-sales-group="2">Segundo grupo</th><th colspan="10">Resultados</th></tr><tr><th>Ventas día</th><th data-sales-group="1">Atenciones</th><th data-sales-group="1">M. Total</th><th data-sales-group="1">M. Neto</th><th data-sales-group="1">IVA</th><th data-sales-group="1">M. Exento</th><th data-sales-group="2">Atenciones</th><th data-sales-group="2">M. Total</th><th data-sales-group="2">M. Exento</th><th>TOTAL</th><th title="Atenciones del registro de eliminación, repartidas entre los días con boletas">ATENCIONES</th><th>COMPRA</th><th title="Margen de contribución: (venta neta − compra) / venta neta">MC</th><th title="Venta neta / atenciones, por semana o mes">TP</th><th title="Venta neta de Servicios alimenticios">SA</th><th>UBER</th><th>PPD YA</th><th>RAPPI</th><th>TOTAL APPs</th></tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty"><span aria-hidden="true">▤</span><h3>Tu registro comienza aquí</h3><p>Copia las 9 columnas de tu reporte de ventas<br>y pégalas para calcular el indicador.</p><button id="pasteEmpty">Libro de Boletas</button></div></div><div class="registry-footer"><span id="registrySummary">Los datos permanecen en este navegador.</span><div><button id="template" class="text-button">Cambiar plantilla Excel</button></div></div></section>
+  <footer class="page-footer"><span id="templateName">Plantilla: Indicadores.xlsx · Hoja: Venta Neta</span><span>Sin macros · Sin conexión · Conserva un respaldo de tus datos</span></footer>
+ </main>
+ <dialog id="multiExportDialog" aria-labelledby="multiExportTitle">
+  <form id="multiExportForm">
+   <div class="dialog-heading"><div><p class="eyebrow" id="multiExportEyebrow">UN SOLO LIBRO EXCEL</p><h2 id="multiExportTitle">Seleccionar indicadores</h2></div><button type="button" class="close" data-close="multiExportDialog" aria-label="Cerrar selección">×</button></div>
+   <div class="actions"><button type="button" id="multiExportAll">Seleccionar todos</button><button type="button" id="multiExportNone">Quitar selección</button></div>
+   <div id="multiExportChoices" class="multi-export-choices"></div>
+   <p id="multiExportCount" class="muted"></p><p id="multiExportError" class="module-error" role="alert" hidden></p><p id="multiExportStatus" role="status"></p>
+   <div class="dialog-actions"><button type="button" data-close="multiExportDialog">Cerrar</button><button type="submit" id="multiExportSubmit" class="primary">Descargar libro</button></div>
+  </form>
+ </dialog>
+ <dialog id="indicatorTextDialog" aria-labelledby="indicatorTextTitle">
+  <form id="indicatorTextForm">
+   <div class="dialog-heading"><div><p id="indicatorTextContext" class="eyebrow"></p><h2 id="indicatorTextTitle">Textos del indicador</h2></div><button type="button" class="close" data-close="indicatorTextDialog" aria-label="Cerrar textos">×</button></div>
+   <div id="indicatorTextFields" class="indicator-text-grid"></div>
+   <p class="muted">Vista previa del encabezado de impresión</p><pre id="indicatorHeaderPreview"></pre>
+   <p id="indicatorTextError" class="module-error" role="alert" hidden></p><p id="indicatorTextStatus" class="muted" role="status"></p>
+   <div class="dialog-actions"><button type="button" id="indicatorTextReset">Usar valores predeterminados</button><button type="button" data-close="indicatorTextDialog">Cerrar</button><button type="submit" class="primary">Guardar textos</button></div>
+  </form>
+ </dialog>
+ <dialog id="removalDialog" aria-labelledby="removalTitle">
+  <form id="removalForm">
+   <div class="dialog-heading"><div><p class="eyebrow">SKUs ELIMINADOS POR TIENDA</p><h2 id="removalTitle">Registro de eliminación</h2></div><button type="button" class="close" data-close="removalDialog" aria-label="Cerrar registro de eliminación">×</button></div>
+   <div class="removal-toolbar"><label>Semana<select id="removalWeek"></select></label></div>
+   <details open class="removal-paste"><summary>Pegar registros</summary><label>Las 13 columnas, incluida la primera vacía<textarea id="removalPaste" rows="5" spellcheck="false" placeholder="Pega aquí las filas copiadas de Excel, con o sin encabezados"></textarea></label><button type="button" id="removalImport">Agregar filas pegadas</button></details>
+   <p id="removalError" class="module-error" role="alert" hidden></p>
+   <details class="removal-paste"><summary>Pegar ventas por cajero</summary><div class="removal-toolbar"><label>Año ISO<input id="removalSalesYear" type="number" min="2000" max="2100" step="1"></label><label>Semana<input id="removalSalesWeek" type="number" min="1" max="53" step="1"></label></div><label>Cajero · Total Atenciones · Monto bruto<textarea id="removalSalesPaste" rows="5" spellcheck="false" placeholder="Carlos Castaño&#9;223&#9;1.092.436"></textarea></label><button type="button" id="removalSalesImport">Usar reporte / reemplazar ventas de esta semana</button></details>
+   <h3>Resumen por cajero</h3>
+   <div class="table-scroll removal-summary"><table><thead><tr><th>Cajero</th><th>Atenciones</th><th>Venta bruta</th><th title="Venta bruta ÷ 1,19">Venta neta</th><th title="Venta neta del cajero ÷ suma de ventas netas">Participación %</th><th>Total eliminaciones</th><th title="Total eliminaciones ÷ venta bruta">Eliminación %</th></tr></thead><tbody id="removalSummary"></tbody><tfoot id="removalSummaryFoot"></tfoot></table></div>
+   <p id="removalCrossNote" class="muted" role="status"></p>
+   <div class="section-head"><h3>Detalle <span id="removalCount" class="count">0</span></h3><button type="button" id="removalSort" aria-pressed="false">Ordenar TOTAL de mayor a menor</button></div>
+   <div class="table-scroll removal-scroll"><table id="removalTable"><thead><tr><th>Vacío</th><th>COD CAJ</th><th>CAJ</th><th>N</th><th>NM</th><th>NMM</th><th>FECHA</th><th>HORA</th><th>COD</th><th>PROD</th><th>TRX</th><th>VAL</th><th id="removalTotalHead" aria-sort="none">TOTAL</th><th>Acciones</th></tr></thead><tbody id="removalRows"></tbody></table></div>
+   <p id="removalEmpty" class="muted">No hay registros en esta selección.</p>
+   <p id="removalStatus" class="muted" role="status"></p>
+   <div class="dialog-actions"><button type="button" data-close="removalDialog">Cerrar</button><button type="submit" class="primary">Guardar registro</button></div>
+  </form>
+ </dialog>
+ <dialog id="cashDialog" aria-labelledby="cashTitle">
+  <form id="cashForm">
+   <div class="dialog-heading"><div><p class="eyebrow">CIERRES DE CAJA</p><h2 id="cashTitle">Cierres por cajero</h2></div><button type="button" class="close" data-close="cashDialog" aria-label="Cerrar cierres">×</button></div>
+   <div class="cash-toolbar"><label>Período<select id="cashPeriod"></select></label><label>Objetivo (%)<input type="number" id="cashGoal" step="any" placeholder="Sin objetivo"></label><button type="button" id="cashAdd">Agregar cajero</button><button type="button" id="cashClear">Quitar datos del período</button></div>
+   <p id="cashRange" class="muted"></p><p id="cashFormula" class="muted"></p>
+   <details id="cashPastePanel"><summary>Pegar reporte</summary><label>Bueno · Malo · Cajero<textarea id="cashPaste" rows="6" spellcheck="false" placeholder="2&#9;3&#9;Carlos Castaño"></textarea></label><button type="button" id="cashImport">Usar reporte en este período</button></details>
+   <div class="table-scroll cash-scroll"><table><thead><tr><th>Bueno</th><th>Malo</th><th>Cajero</th><th></th></tr></thead><tbody id="cashRows"></tbody><tfoot id="cashTotals"></tfoot></table></div>
+   <p id="cashError" class="module-error" role="alert" hidden></p><p id="cashStatus" class="muted" role="status"></p>
+   <div class="dialog-actions"><button type="button" data-close="cashDialog">Cerrar</button><button type="submit" class="primary">Guardar cierres</button></div>
+  </form>
+ </dialog>
+ <dialog id="independentDialog" aria-labelledby="independentTitle">
+  <form id="independentForm">
+   <div class="dialog-heading"><div><p class="eyebrow">INDICADORES INDEPENDIENTES</p><h2 id="independentTitle"></h2></div><button type="button" class="close" data-close="independentDialog" aria-label="Cerrar">×</button></div>
+   <p id="independentDescription" class="muted"></p>
+   <label id="independentDirectionLabel">Cumple el objetivo cuando el resultado es<select id="independentDirection"><option value="higher">Mayor o igual al objetivo</option><option value="lower">Menor o igual al objetivo</option><option value="equal">Igual al objetivo</option></select></label>
+   <div class="table-scroll independent-scroll"><table><thead id="independentHead"></thead><tbody id="independentRows"></tbody></table></div>
+   <p id="independentError" class="module-error" role="alert" hidden></p><p id="independentStatus" role="status" class="muted"></p>
+   <div class="dialog-actions"><button type="button" data-close="independentDialog">Cerrar</button><button type="submit" class="primary">Guardar datos</button></div>
+  </form>
+ </dialog>
+ <dialog id="pasteDialog"><form id="pasteForm"><div class="dialog-heading"><div><p class="eyebrow">REGISTRO DIARIO</p><h2 id="pasteTitle">Libro de Boletas</h2></div><button type="button" class="close" data-close="pasteDialog" aria-label="Cerrar">×</button></div><p>Copia las nueve columnas desde Excel, con o sin encabezados. Usa fechas completas: <b>25/09/2026</b>. Los campos numéricos vacíos se tomarán como 0.</p><div class="column-guide">Fecha · Documentos 1 · Total 1 · Neto · IVA · Exento 1 · Documentos 2 · Total 2 · Exento 2</div><label>Datos del reporte<textarea id="pasteText" rows="8" spellcheck="false" placeholder="25/09/2026&#9;10&#9;119.000&#9;100.000&#9;19.000&#9;5.000&#9;3&#9;15.000&#9;15.000"></textarea></label><div class="import-options"><label>Si el día ya existe<select id="importMode"><option value="replace">Reemplazar todos los registros de ese día</option><option value="append">Agregar registros, omitiendo duplicados exactos</option></select></label><button type="button" id="validate">Revisar datos</button></div><div id="pastePreview" class="paste-preview" role="status">Revisa los datos antes de incorporarlos.</div><div class="dialog-actions"><button type="button" data-close="pasteDialog">Cancelar</button><button type="submit" id="import" class="primary" disabled>Guardar registros</button></div></form></dialog>
+ <dialog id="scaleDialog" aria-labelledby="scaleTitle">
+  <form id="scaleForm">
+   <div class="dialog-heading"><div><p class="eyebrow" id="scaleContext"></p><h2 id="scaleTitle">Escala</h2></div><button type="button" class="close" data-close="scaleDialog" aria-label="Cerrar escala">×</button></div>
+   <p>Define el rango de las barras para este indicador. Los objetivos conservan sus valores.</p>
+   <div class="scale-settings"><label><span id="scaleMinLabel">Mínimo</span><input id="scaleMin" type="number" min="0" step="any" required></label><label><span id="scaleMaxLabel">Máximo</span><input id="scaleMax" type="number" min="0" step="any" required></label><button type="button" id="autoScale">Calcular escala</button></div>
+   <p class="muted">El cálculo automático considera los resultados y los objetivos guardados del período actual.</p>
+   <p class="muted" id="scaleSuggestion" role="status"></p>
+   <p class="muted">Los 13 niveles se comparten con Excel. Puedes editar los intermedios; mínimo y máximo fijan los extremos.</p>
+   <p id="scaleRoundingNote" class="muted">Al terminar de editar, las cifras restantes se convierten en ceros: 12.345.678 → 12.340.000; 1.234.567 → 1.230.000; 12.345 → 12.000. El recorte también se aplica al calcular y guardar la escala.</p>
+   <div class="scale-levels-scroll"><table><thead><tr><th>Nivel</th><th>Valor</th></tr></thead><tbody id="scaleLevels"></tbody></table></div>
+   <p class="module-error" id="scaleError" role="alert" hidden></p>
+   <div class="dialog-actions"><button type="button" data-close="scaleDialog">Cancelar</button><button class="primary" type="submit">Guardar escala</button></div>
+  </form>
+ </dialog>
+ <dialog id="goalsDialog" aria-labelledby="goalsTitle">
+  <form id="goalsForm">
+   <div class="dialog-heading"><div><p class="eyebrow" id="goalsContext"></p><h2 id="goalsTitle">Objetivos</h2></div><button type="button" class="close" data-close="goalsDialog" aria-label="Cerrar objetivos">×</button></div>
+   <div class="annual-toolbar"><label>Año de la tabla<input id="goalsYear" type="number" min="2000" max="2100" required></label><p id="goalsSource" class="muted"></p></div>
+   <p>Meses en columnas y objetivos en filas, como en objetivos.xlsx. Edita los campos; las filas marcadas «Calculado» se actualizan automáticamente. Los porcentajes se ingresan como 38,28 para 38,28 %.</p>
+   <div class="table-scroll annual-scroll" tabindex="0" aria-label="Tabla anual de objetivos; desplázate horizontalmente para ver todos los meses"><table id="annualGoals"><thead id="annualGoalsHead"></thead><tbody id="annualGoalsRows"></tbody></table></div>
+   <div class="annual-rules"><span>Semana: 6 días efectivos</span><span>Turnos: 60 % / 40 %</span><span>SA semanal: objetivo mensual ÷ 30 × 7</span></div>
+   <label class="visits-rule">Meta semanal de atenciones<select id="visitsGoalMode"><option value="manual">Definir manualmente por período</option><option value="sixDays">Atenciones día efectivo × 6</option></select></label>
+   <details id="periodOverrides"><summary>Ajustes por período <span id="overrideCount"></span></summary>
+    <p>La venta neta del indicador usa «Venta neta SEMANAL». Cada semana toma el objetivo del mes de su jueves ISO. Las tres barras del trimestre anterior abarcan del día 1 al último día calendario de su mes y usan la meta semanal de ese mes.</p>
+    <div class="actions"><button id="useAnnualGoals" type="button">Usar tabla en estos períodos</button><span class="muted">También puedes elegir una meta manual o dejarla vacía.</span></div>
+    <div class="table-scroll goals-scroll"><table><thead><tr><th>Período</th><th>Fechas</th><th>Resultado</th><th>Origen de la meta</th><th id="goalsTargetHeader">Objetivo</th></tr></thead><tbody id="goals"></tbody></table></div>
+   </details>
+   <p class="module-error" id="goalsError" role="alert" hidden></p>
+   <div class="dialog-actions"><button type="button" data-close="goalsDialog">Cancelar</button><button class="primary" type="submit">Guardar objetivos</button></div>
+  </form>
+ </dialog>
+ <dialog id="purchasesDialog" aria-labelledby="purchasesTitle">
+  <form id="purchasesForm">
+   <div class="dialog-heading"><div><p class="eyebrow">REGISTRO DIARIO</p><h2 id="purchasesTitle">Compras semanales</h2></div><button type="button" class="close" data-close="purchasesDialog" aria-label="Cerrar compras">×</button></div>
+   <label class="purchases-year">Año ISO<input id="purchasesYear" type="number" min="2000" max="2100" required></label>
+   <p>Ingresa el total de compra de cada semana, de lunes a domingo. Se repartirá por igual entre los días con registros. Si agregas más días, el reparto se actualizará conservando el total semanal.</p>
+   <p class="muted">Los centavos sobrantes se asignan a los primeros días. Si un día tiene varios registros, su compra se divide entre ellos. Deja el monto vacío para quitar una compra; 0 es una compra registrada de valor cero.</p>
+   <div class="table-scroll purchases-scroll"><table id="purchasesTable"><thead><tr><th>Semana</th><th>Inicio</th><th>Final</th><th>Compra</th><th>Días con registros</th></tr></thead><tbody id="purchasesRows"></tbody></table></div>
+   <p class="module-error" id="purchasesError" role="alert" hidden></p>
+   <div class="dialog-actions"><button type="button" data-close="purchasesDialog">Cancelar</button><button class="primary" type="submit">Guardar compras</button></div>
+  </form>
+ </dialog>
+ <dialog id="groupSalesDialog" aria-labelledby="groupSalesTitle">
+  <form id="groupSalesForm">
+   <div class="dialog-heading"><div><p class="eyebrow">DESGLOSE SEMANAL</p><h2 id="groupSalesTitle">Ventas por grupos</h2></div><button type="button" class="close" data-close="groupSalesDialog" aria-label="Cerrar ventas por grupos">×</button></div>
+   <div class="group-week-toolbar"><label>Semana guardada<select id="groupWeekSelect"></select></label><button type="button" id="removeGroupWeek" class="text-button">Quitar semana</button></div>
+   <div class="group-week-toolbar"><label>Año ISO<input id="groupYear" type="number" min="2000" max="2100"></label><label>Nueva semana<input id="groupWeek" type="number" min="1" max="53"></label><button type="button" id="addGroupWeek">Agregar semana</button><strong id="groupDates"></strong></div>
+   <details id="groupPaste"><summary>Pegar reporte del sistema</summary>
+    <label>Reporte<textarea id="groupReportText" rows="6" spellcheck="false" placeholder="Grupo&#9;Nombre&#9;Monto bruto&#10;22&#9;PANADERIA&#9;$846.274"></textarea></label>
+    <div id="groupReportPreview" class="paste-preview" role="status">Revisa el reporte antes de incorporarlo.</div>
+    <div class="actions"><button type="button" id="reviewGroupReport">Revisar reporte</button><button type="button" id="applyGroupReport" disabled>Usar reporte</button></div>
+   </details>
+   <div class="group-totals"><span>Cantidad informada <strong id="groupQuantityTotal">—</strong></span><span>Bruto categorías <strong id="groupAmountTotal">—</strong></span><span>Neto categorías <strong id="groupNetTotal">—</strong></span><button type="button" id="addSalesCategory">Agregar categoría</button></div>
+   <div class="table-scroll group-sales-scroll"><table id="groupSalesTable"><thead><tr><th>Grupo</th><th>Nombre</th><th>Cantidad</th><th>Venta Bruta</th><th>Venta Neta</th><th></th></tr></thead><tbody id="groupRows"></tbody></table><p id="groupNoRows" class="muted">Todavía no hay semanas guardadas.</p></div>
+   <div class="group-totals"><h3>Ventas APPs</h3><button type="button" id="addSalesApp">Agregar APP</button></div>
+   <div class="table-scroll"><table id="salesAppsTable"><thead><tr><th>APP</th><th>Venta Bruta</th><th>Venta Neta</th><th></th></tr></thead><tbody id="appsRows"></tbody></table></div>
+   <div class="group-totals"><span>Bruto APPs <strong id="appsGrossTotal">—</strong></span><span>Neto APPs <strong id="appsNetTotal">—</strong></span></div>
+   <div class="group-totals group-grand-total"><span>VENTA TOTAL BRUTA <strong id="grandGrossTotal">—</strong></span><span>VENTA TOTAL NETA <strong id="grandNetTotal">—</strong></span></div>
+   <p id="groupComparison" class="muted"></p>
+   <p id="groupSalesError" class="module-error" role="alert" hidden></p>
+   <div class="dialog-actions"><span id="groupSalesStatus" role="status"></span><button type="button" data-close="groupSalesDialog">Cancelar</button><button type="submit" class="primary">Guardar desglose</button></div>
+  </form>
+ </dialog>
+ <dialog id="groupAnalysisDialog" aria-labelledby="groupAnalysisTitle">
+  <div class="dialog-heading"><div><p class="eyebrow">COMPARATIVO SEMANAL</p><h2 id="groupAnalysisTitle">Análisis de ventas por grupo</h2><p id="analysisRange" class="muted"></p></div><button type="button" class="close" data-close="groupAnalysisDialog" aria-label="Cerrar análisis">×</button></div>
+  <div class="analysis-toolbar">
+   <label>Hasta la semana<select id="analysisEndWeek"></select></label>
+   <label>Semanas a visualizar<select id="analysisWeeks"><option value="1">1 semana</option><option value="2">2 semanas</option><option value="3" selected>3 semanas</option><option value="4">4 semanas</option><option value="5">5 semanas</option></select></label>
+   <label>Gráficos y ranking<select id="analysisBasis"><option value="net">Venta neta</option><option value="gross">Venta bruta</option></select></label>
+  </div>
+  <div class="analysis-export-toolbar">
+   <label>Imagen para PPT<select id="analysisImageMode"><option value="pages">Comparativo · láminas PNG individuales</option><option value="summary">Solo resumen · PNG 16:9</option><option value="detail">Solo desglose de grupos y APPs · PNG</option></select></label>
+   <button type="button" id="analysisExportPng">Descargar PNG</button><button type="button" id="analysisExportExcel">Exportar comparativo a Excel</button>
+  </div>
+  <p id="analysisExportStatus" role="status" class="analysis-export-status" hidden></p>
+  <div id="analysisPngFiles" class="analysis-png-files" aria-label="Descargas de imágenes PNG"></div>
+  <div id="analysisCards" class="analysis-cards"></div>
+  <div class="analysis-charts">
+   <section class="analysis-panel"><div class="analysis-panel-head"><div><p class="eyebrow">EVOLUCIÓN</p><h3 id="analysisTrendTitle">Venta total</h3></div><label>Ver grupo o APP<select id="analysisChartItem"></select></label></div><div id="analysisTrend"></div><div id="analysisHighlights" class="analysis-highlights"></div></section>
+   <section class="analysis-panel"><div class="analysis-panel-head"><div><p class="eyebrow">RANKING DEL PERÍODO</p><h3 id="analysisRankTitle">Grupos con mayor venta neta</h3></div></div><div id="analysisRanking"></div></section>
+  </div>
+  <section class="analysis-panel analysis-detail">
+   <div class="analysis-panel-head"><div><p class="eyebrow">DESGLOSE COMPARADO</p><h3>Grupos y APPs</h3></div><div class="analysis-table-controls"><label>Buscar<input id="analysisSearch" type="search" placeholder="Nombre o número de grupo"></label><label>Mostrar<select id="analysisType"><option value="all">Grupos y APPs</option><option value="group">Solo grupos</option><option value="app">Solo APPs</option></select></label><label class="analysis-checkbox"><input id="analysisShowQuantity" type="checkbox"> Cantidades</label></div></div>
+   <div class="actions analysis-detail-downloads"><button type="button" id="analysisDetailPng">Descargar desglose PNG</button><button type="button" id="analysisDetailExcel">Descargar desglose Excel</button></div>
+   <div class="analysis-table-scroll" tabindex="0" aria-label="Tabla comparativa de semanas; desplázate para ver todas las columnas"><table id="analysisTable"><thead id="analysisTableHead"></thead><tbody id="analysisTableRows"></tbody><tfoot id="analysisTableFoot"></tfoot></table></div>
+   <div class="analysis-table-note"><span id="analysisVisibleCount"></span><span>Crecimiento neto vs semana anterior · — sin datos · Base 0 sin porcentaje calculable</span></div>
+  </section>
+  <section class="analysis-panel"><div class="analysis-panel-head"><h3>Resumen de la operación</h3></div><div class="table-scroll"><table class="analysis-summary"><thead id="analysisSummaryHead"></thead><tbody id="analysisSummaryRows"></tbody></table></div></section>
+  <div class="dialog-actions"><button type="button" data-close="groupAnalysisDialog">Cerrar análisis</button></div>
+ </dialog>
+ <input id="restoreFile" type="file" accept=".json" hidden><input id="templateFile" type="file" accept=".xlsx" hidden>
+</body></html>

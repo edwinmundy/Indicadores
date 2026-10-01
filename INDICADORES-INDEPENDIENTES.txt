@@ -1,0 +1,31 @@
+INDICADORES INDEPENDIENTES
+
+Selecciona SKUs NEGATIVOS, SKUs ELIMINADOS POR TIENDA, CIERRES DE CAJA, RECLAMOS o FELICITACIONES y pulsa Ingresar datos.
+
+Cada indicador mantiene sus datos separados del registro diario, las compras y las ventas por grupos. No modifica los resultados anteriores. Se incluyen en el respaldo del navegador y en el respaldo JSON.
+
+El formulario presenta los tres meses anteriores y las trece semanas del indicador. Por ahora, los datos mensuales y semanales se ingresan por separado: no se deducen de las ventas ni se suman entre sí. Para otros períodos, cambia el año y la semana inicial en la pantalla principal.
+
+SKUs NEGATIVOS: ingresa negativos y vigentes. Resultado = negativos / vigentes, mostrado en porcentaje con dos decimales. Ejemplo: 12 / 2150 = 0,56 %. Objetivo fijo 0 %: verde para cero y rojo para cualquier porcentaje positivo. Sin vigentes, con vigentes cero o con un campo vacío, se muestra sin datos.
+
+SKUs eliminados permite cantidades enteras por período y metas manuales. Reclamos tiene objetivo fijo 0: cero cumple y cualquier cantidad positiva queda fuera del objetivo; su escala inicial va de -10 a 10. Felicitaciones tiene como referencia cero: cualquier cantidad mayor que cero es positiva, y cero se muestra en rojo. Un período vacío continúa sin datos.
+
+Escala abre la escala propia del indicador. Objetivos abre su formulario independiente. Guardar datos conserva la ventana abierta; Cerrar descarta los cambios que no se hayan guardado. Quitar dato vacía el registro del período; se aplica al guardar.
+
+Exportar indicador conserva el formato A1:AM53 y exporta solo el seleccionado. Exportar datos agrega la hoja Indicadores independientes con sus cantidades, resultados, objetivos y criterio de cumplimiento.
+
+Recarga la página con Ctrl+F5 si ya estaba abierta.
+
+CIERRES DE CAJA POR CAJERO
+
+Ingresar datos y Objetivos abren el editor de cierres. Elige un mes o semana y pega las tres columnas Bueno, Malo y Cajero. Puedes agregar, quitar o cambiar los nombres y las cantidades. Las celdas numéricas vacías se interpretan como cero; se omiten encabezados, filas vacías y totales sin nombre de cajero.
+
+Total = buenos + malos. Resultado = buenos / total, mostrado sin decimales. Ejemplo: 39 cierres totales y 4 malos equivalen a 35 buenos: 35 / 39 = 89,74 %, presentado como 90 %. Los cálculos y la comparación con la meta conservan la precisión original.
+
+La meta de cierres es superar el 90 % por defecto y sigue siendo editable por período; ingresa 95 para 95 %. Si el campo queda vacío, se aplica el 90 % predeterminado. Solo los resultados superiores al objetivo aparecen verdes. Los objetivos anteriores de 100 % se ajustan a 90 %. Si no hay cierres, se muestra sin datos. El porcentaje no divide por el objetivo.
+
+El indicador muestra malos y total encima del resultado en pantalla y en Excel. La descarga de datos incorpora la hoja Cierres por cajero y los totales en Indicadores independientes.
+
+Guardar cierres conserva la ventana abierta. Cambiar de período conserva el borrador hasta guardar. Cerrar descarta los cambios sin guardar. Las antiguas cantidades y metas de la versión de conteo se conservan como antecedentes; para el porcentaje se requiere el nuevo detalle y una meta porcentual.
+
+Ventas por grupos abre automáticamente la semana más reciente de las guardadas, incluyendo su año y fechas.

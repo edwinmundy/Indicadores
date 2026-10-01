@@ -1,0 +1,20 @@
+INDICADOR MC · MARGEN DE CONTRIBUCIÓN
+
+Selecciona «MC · Margen de contribución» en el selector Indicador.
+
+Fórmula: (venta neta del período - compra del período) / venta neta del período.
+Las trece semanas muestran el margen de cada semana. Los tres meses anteriores muestran el margen total de cada mes calendario, igual que el registro diario. Las compras se reparten entre los días con registros según el reparto existente.
+
+MC se muestra redondeado a porcentajes enteros, sin decimales, en pantalla y en las descargas Excel y PNG. Los cálculos conservan su precisión interna.
+
+La escala y los objetivos se introducen en porcentaje: 35 representa 35 %. La escala permite valores negativos y se puede calcular automáticamente. Los objetivos se toman de la fila MC de la tabla anual o de las metas manuales por período. Se conservan los colores habituales del indicador.
+
+Sin compras informadas o con venta neta cero, MC aparece sin datos. Una compra informada como cero sí participa en el cálculo.
+
+Exportar indicador descarga solo el indicador seleccionado, con valores fijos y formato porcentual para MC. La hoja se presenta e imprime en A1:AM53; se conservan el logo y las marcas de objetivo, sin botones, datos auxiliares ni otras hojas. El resultado visible de MC es su margen de contribución, sin el porcentaje de cumplimiento del objetivo.
+
+Exportar datos descarga por separado el registro diario, las compras, los resúmenes semanal y mensual y el desglose de grupos y APPs cuando existe. Este libro conserva las fórmulas de los datos y sus hojas de cálculo auxiliares.
+
+Al guardar compras, el indicador se actualiza.
+
+Si la página estaba abierta, recárgala con Ctrl+F5.
